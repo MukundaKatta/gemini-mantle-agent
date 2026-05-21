@@ -136,6 +136,7 @@ def say_to_m4a(text, outpath):
     )
     subprocess.run(
         ["ffmpeg", "-y", "-loglevel", "error", "-i", str(aiff),
+         "-ar", "48000", "-ac", "2",
          "-c:a", "aac", "-b:a", "128k", str(outpath)],
         check=True,
     )
