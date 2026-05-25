@@ -62,6 +62,7 @@ apache-2
 
 ## Try it out
 - Code repo: https://github.com/MukundaKatta/gemini-mantle-agent
+- BUIDL submission: https://dorahacks.io/buidl/44005
 - Live demo (Cloud Run): pinned after deploy
 - Demo video: pinned after upload
 - Author: Mukunda Katta, independent.
