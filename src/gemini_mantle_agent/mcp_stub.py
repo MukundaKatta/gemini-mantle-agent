@@ -24,10 +24,12 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
-
+# NOTE: the ``mcp`` package is intentionally NOT imported at module load
+# time. The canned-chain-state constants and the pure ``*_response``
+# builder functions below are the testable core of this stub and have no
+# dependency on the MCP server framework. Deferring the ``mcp`` import to
+# ``_make_server`` keeps that core importable (and unit-testable) in
+# environments where ``mcp`` is not installed.
 
 NOW = datetime.now(timezone.utc)
 
@@ -187,7 +189,12 @@ def list_top_protocols_response(
 # ---------------------------------------------------------------------------
 
 
-def _make_server() -> Server:
+def _make_server() -> Any:
+    # Imported lazily so the pure ``*_response`` helpers above remain
+    # importable without the ``mcp`` package installed.
+    from mcp.server import Server
+    from mcp.types import Tool, TextContent
+
     server = Server("mantle-mcp-stub")
 
     @server.list_tools()
@@ -302,6 +309,8 @@ def _make_server() -> Server:
 
 
 async def _main() -> None:
+    from mcp.server.stdio import stdio_server
+
     server = _make_server()
     async with stdio_server() as (read, write):
         await server.run(read, write, server.create_initialization_options())

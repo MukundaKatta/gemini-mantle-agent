@@ -1,5 +1,7 @@
 # gemini-mantle-agent
 
+[![CI](https://github.com/MukundaKatta/gemini-mantle-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/MukundaKatta/gemini-mantle-agent/actions/workflows/ci.yml)
+
 An on-chain analyst agent built on **Google Cloud Agent Builder (ADK)**,
 **Gemini 2.5**, and a **Mantle MCP server**. Submission for the
 **DoraHacks Mantle Turing Test 2026** (deadline 2026-06-15).
@@ -79,16 +81,60 @@ publishes — until then, the stub is the canonical demo path.)
 
 ## Tests
 
+The test suite uses only the Python standard library (`unittest`) and
+needs **no third-party packages installed** — the canned-chain-state
+response builders are deliberately decoupled from the `mcp` and
+`google-adk` runtime dependencies, so the core logic can be unit-tested
+anywhere:
+
 ```bash
-PYTHONPATH=src pytest -q
+PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
+
+(`pytest` also discovers and runs the same `tests/` directory if you
+prefer it.)
 
 The suite pins the story-chain contract: every tool that returns a
 `block_height` agrees on `90215643`, Agni Finance shows up in both
 `list_top_protocols` and `get_protocol_tvl`, the WMNT address
 `0x4200000000000000000000000000000000000006` appears in both
 `query_contract` and `get_transaction.to`, and the deposit tx hash
-matches byte-for-byte.
+matches byte-for-byte. It also covers the error paths (unknown protocol
+/ contract / tx / category), the `limit` floor on `list_top_protocols`,
+the defensive copy on `get_protocol_tvl`, and the documented
+offline-fallback contracts of `build_agent` and `ask` when `google-adk`
+is not installed.
+
+## Using the stub chain state directly
+
+The pure response builders are importable on their own, without `mcp` or
+`google-adk`, which makes them easy to reuse in tests, notebooks, or your
+own harness:
+
+```python
+from gemini_mantle_agent.mcp_stub import (
+    get_block_height_response,
+    get_protocol_tvl_response,
+    list_top_protocols_response,
+)
+
+get_block_height_response()
+# {'chain': 'mantle-mainnet', 'block_height': 90215643,
+#  'timestamp': '2026-05-20T18:00:00Z'}
+
+get_protocol_tvl_response("Agni Finance")["tvl_usd"]
+# 12847193.42
+
+[p["name"] for p in list_top_protocols_response("DEX")["protocols"]]
+# ['Agni Finance', 'FusionX', 'Merchant Moe']
+```
+
+To run the full stub as an MCP server over stdio (this path does require
+the `mcp` package):
+
+```bash
+PYTHONPATH=src python3 -m gemini_mantle_agent.mcp_stub
+```
 
 ## License
 
